@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#1f3a2e">
+<title>Bornes Kissidougou</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bornes">
+
+<style>
+:root{--bg:#f4f2ec;--card:#fff;--ink:#1d1d1b;--mute:#6b6a64;--line:#dedbd2;--acc:#1f6f4f;--acc2:#e8f3ee;--warn:#b5651d;--ok:#1f8a4c;--bad:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1f1f1d;--ink:#f0eee8;--mute:#a3a19a;--line:#33322f;--acc:#5cc29a;--acc2:#1d3229;--warn:#e0a060;--ok:#5cc29a;--bad:#f08a80}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
+header{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:18px;margin:0;font-weight:600}
+header small{color:var(--mute);font-size:12px}
+main{padding:0 16px 24px;max-width:560px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;align-items:center}
+.status{font-size:13px;color:var(--mute);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--bad);display:inline-block}
+.dot.ok{background:var(--ok)}.dot.mid{background:var(--warn)}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;cursor:pointer}
+button.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+@media (prefers-color-scheme:dark){button.pri{color:#0f1f18}}
+input,select{font:inherit;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.target{font-size:13px;color:var(--mute);margin-bottom:4px}
+.tname{font-size:26px;font-weight:700;letter-spacing:.5px}
+.guide{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;margin-top:10px}
+.compass{width:150px;height:150px;position:relative}
+.big{font-size:40px;font-weight:700;line-height:1}
+.unit{font-size:16px;color:var(--mute);font-weight:500}
+.kv{font-size:14px;color:var(--mute);margin-top:6px;line-height:1.6}
+.kv b{color:var(--ink);font-weight:600}
+.arrive{display:none;margin-top:12px;padding:12px;border-radius:10px;background:var(--acc2);color:var(--ink);font-size:14px}
+.arrive.on{display:block}
+.list{max-height:46vh;overflow:auto;margin-top:8px;border-top:1px solid var(--line)}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);gap:8px}
+.item .n{font-weight:600}
+.item .d{color:var(--mute);font-size:13px;text-align:right;white-space:nowrap}
+.item.sel{background:var(--acc2)}
+.mini{padding:6px 10px;font-size:13px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:10}
+.sheet.on{display:flex}
+.fiche{background:var(--card);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 18px 24px}
+.fiche h2{margin:0 0 2px;font-size:24px}
+.fiche table{width:100%;border-collapse:collapse;margin:12px 0;font-size:16px}
+.fiche td{padding:9px 4px;border-bottom:1px solid var(--line)}
+.fiche td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.note{font-size:12px;color:var(--mute);line-height:1.5}
+details summary{cursor:pointer;color:var(--mute);font-size:14px}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 6px;border-radius:6px;background:var(--acc2);color:var(--acc);margin-left:6px;vertical-align:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Bornes Kissidougou</h1><small>Polygonale de base · WGS 84 / UTM 29N · hors ligne</small></div>
+  <button class="mini" id="btnCompass" title="Activer la boussole">Boussole</button>
+</header>
+<main>
+  <div class="card">
+    <div class="status"><span class="dot" id="gpsDot"></span><span id="gpsTxt">GPS en attente…</span></div>
+    <div class="status" id="posTxt" style="margin-top:4px"></div>
+  </div>
+
+  <div class="card" id="guideCard">
+    <div class="target">Borne visée</div>
+    <div class="row" style="justify-content:space-between">
+      <div class="tname" id="tName">—</div>
+      <button class="mini" id="btnFiche">Fiche</button>
+    </div>
+    <div class="guide">
+      <svg class="compass" viewBox="0 0 150 150" aria-label="Direction de la borne">
+        <circle cx="75" cy="75" r="70" fill="none" stroke="currentColor" stroke-opacity=".18" stroke-width="2"/>
+        <g id="rose">
+          <text x="75" y="18" text-anchor="middle" font-size="13" font-weight="700" fill="#b3261e">N</text>
+          <text x="134" y="80" text-anchor="middle" font-size="11" fill="currentColor" fill-opacity=".5">E</text>
+          <text x="75" y="141" text-anchor="middle" font-size="11" fill="currentColor" fill-opacity=".5">S</text>
+          <text x="16" y="80" text-anchor="middle" font-size="11" fill="currentColor" fill-opacity=".5">O</text>
+        </g>
+        <g id="arrow" style="transition:transform .25s">
+          <path d="M75 22 L95 92 L75 80 L55 92 Z" fill="var(--acc)"/>
+        </g>
+        <circle cx="75" cy="75" r="5" fill="currentColor"/>
+      </svg>
+      <div>
+        <div><span class="big" id="dist">—</span> <span class="unit" id="distU"></span></div>
+        <div class="kv">Gisement <b id="gis">—</b><br>Direction <b id="dirTxt">—</b><br><span id="headTxt">Boussole inactive : la flèche indique le Nord en haut</span></div>
+      </div>
+    </div>
+    <div class="arrive" id="arrive"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <input id="q" placeholder="Rechercher une borne (ex. OH1, TP9)" autocomplete="off">
+    </div>
+    <div class="row" style="margin-top:8px;justify-content:space-between">
+      <span class="note" id="listInfo">Bornes triées par distance</span>
+      <button class="mini" id="btnNearest">Plus proche</button>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="n" style="font-weight:600">Mes bornes ajoutées</div><div class="note" id="userInfo">Aucune pour l'instant</div></div>
+      <button class="pri" id="btnAdd">+ Ajouter</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="mini" id="btnExport" style="flex:1">Exporter (TXT)</button>
+      <button class="mini" id="btnImport" style="flex:1">Importer (TXT)</button>
+      <input type="file" id="fileImp" accept=".txt,.csv,text/plain" style="display:none">
+    </div>
+    <p class="note" style="margin-top:8px">Les bornes ajoutées sont gardées dans la mémoire de ce téléphone. Exporte-les régulièrement : c'est ce fichier qu'on partage avec l'équipe, et il protège en cas d'effacement des données du navigateur.</p>
+    <div class="note" id="impMsg"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Position manuelle (test au bureau ou GPS indisponible)</summary>
+      <div class="grid2">
+        <input id="mx" inputmode="decimal" placeholder="X (Est)">
+        <input id="my" inputmode="decimal" placeholder="Y (Nord)">
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="pri" id="btnManual">Utiliser cette position</button>
+        <button id="btnGps">Revenir au GPS</button>
+      </div>
+    </details>
+    <p class="note" style="margin-top:10px">Le GPS d'un téléphone est précis à 3 à 10 m. L'application amène dans la zone de la borne ; on la repère ensuite au sol avec sa fiche signalétique. Elle ne remplace pas une station totale ni un GNSS RTK pour l'implantation.</p>
+  </div>
+</main>
+
+<div class="sheet" id="sheet">
+  <div class="fiche">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="target">Fiche signalétique</div><h2 id="fName">—</h2></div>
+      <button class="mini" id="btnClose">Fermer</button>
+    </div>
+    <table>
+      <tr><td>X (Est)</td><td id="fX"></td></tr>
+      <tr><td>Y (Nord)</td><td id="fY"></td></tr>
+      <tr><td>Z (altitude)</td><td id="fZ"></td></tr>
+      <tr><td>Distance actuelle</td><td id="fD"></td></tr>
+    </table>
+    <p class="note" id="fSrc"></p>
+    <div class="row" style="margin-top:12px"><button class="pri" id="btnGo" style="flex:1">Guider vers cette borne</button></div>
+    <div class="row" id="fUserBtns" style="margin-top:8px"><button id="btnEdit" style="flex:1">Modifier</button><button id="btnDel" style="flex:1;color:var(--bad)">Supprimer</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetAdd">
+  <div class="fiche">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="target" id="aMode">Nouvelle borne</div><h2>Saisie</h2></div>
+      <button class="mini" id="btnAddClose">Fermer</button>
+    </div>
+    <div style="display:grid;gap:8px;margin-top:12px">
+      <input id="aN" placeholder="Nom (ex. DP1)" autocomplete="off">
+      <div class="grid2" style="margin:0">
+        <input id="aX" inputmode="decimal" placeholder="X (Est)">
+        <input id="aY" inputmode="decimal" placeholder="Y (Nord)">
+      </div>
+      <input id="aZ" inputmode="decimal" placeholder="Z (facultatif)">
+      <input id="aR" placeholder="Remarque (repères, côté de la route…)" autocomplete="off">
+      <button id="btnUseGps">Prendre ma position GPS actuelle</button>
+      <div class="note" id="aSrcTxt"></div>
+      <div class="note" id="aErr" style="color:var(--bad)"></div>
+      <button class="pri" id="btnSave">Enregistrer la borne</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE=[["RNG-2",376344.03,1012726.2,520.526],["AL1-1",381403.014,1017318.16,520.402],["AL2-1",381234.567,1017441.985,517.24],["AL3-1",381067.783,1017631.562,517.401],["AM1-1",379118.967,1016737.443,515.627],["AM2-1",379135.537,1016662.216,515.563],["AM3-1",379111.198,1016568.007,519.918],["B6-1",378250.662,1013173.27,527.048],["B6-2",378503.042,1013328.589,519.679],["BA1-1",379067.665,1014957.235,502.031],["BA2-1",379124.311,1015139.305,507.736],["BA3-1",379275.767,1015466.271,519.201],["BA4-1",379276.639,1015492.193,518.986],["BA5-1",379352.525,1015440.585,516.564],["BA6-1",379323.772,1015334.985,514.945],["BA7-1",379384.367,1015291.875,512.966],["BA8-1",379364.846,1014729.717,500.397],["CS1-1",379141.115,1016310.178,520.89],["DA1-1",380765.7,1016388.42,504.563],["DA2-1",380639.238,1016337.771,496.215],["DA3-1",380443.085,1016451.924,503.105],["DA4-1",380267.547,1016658.956,514.054],["DJ1-1",380271.428,1016794.289,514.171],["DJ2-1",380352.52,1017029.139,511.34],["DJ3-1",380270.694,1017188.987,517.351],["DJ4-1",380268.324,1017494.412,516.415],["DJ5-1",380130.599,1017595.324,520.356],["DJ6-1",379968.136,1017674.014,522.533],["DJ7-1",379899.348,1017611.667,523.86],["DO1-1",379635.827,1015876.937,515.806],["DO2-1",379607.262,1016105.416,516.788],["EL1-1",379128.206,1015530.339,515.658],["EL2-1",379067.598,1015314.881,510.437],["EL3-1",378972.865,1015096.807,503.458],["FA1-1",378506.996,1017757.748,527.135],["FA2-1",378455.798,1017663.494,526.25],["FA3-1",378356.411,1017212.095,523.117],["FA4-1",378237.899,1016804.401,520.806],["FA5-1",378375.693,1016588.089,511.604],["FA6-1",378416.734,1016491.445,505.264],["FA8-1",378519.204,1016329.201,511.848],["FR1-1",379192.586,1016029.728,522.464],["FR2-1",379224.654,1015930.677,519.408],["GA1-1",379110.606,1016422.897,519.643],["GA2-1",379033.862,1016415.642,515.898],["GA4-1",378968.817,1016366.527,513.491],["HA1-1",379166.615,1016032.791,522.739],["HA2-1",378994.246,1015974.32,518.668],["K8",378246.761,1013171.484,527.181],["KI1-1",379195.468,1015717.306,515.67],["KI2-1",379355.925,1015674.733,517.241],["KK1-1",381594.211,1017463.528,520.777],["KK2-1",381678.543,1017309.185,516.979],["KR2-1",379595.225,1018000.932,521.553],["KR4-1",379478.715,1017625.37,515.595],["KR5-1",379332.887,1017578.812,511.824],["KR6-1",379242.054,1017573.093,505.927],["KR7-1",379058.474,1017422.232,517.93],["KR9-1",378957.613,1017330.078,518.773],["KR10-1",378746.002,1017308.839,521.643],["LM5-1",380209.764,1014704.641,496.525],["LM6-1",380006.834,1014687.012,501.266],["OH1",376912.924,1012766.848,508.829],["PM2-1",379504.256,1014157.5,509.456],["PM3-1",379525.924,1014116.025,510.312],["PM4-1",379645.936,1014089.095,511.82],["SG1-1",378312.262,1018206.899,526.271],["SG2-1",378396.636,1018333.554,529.987],["SG3-1",378441.246,1018359.811,530.649],["SG4-1",378420.345,1018434.661,530.34],["SG5-1",378306.97,1018389.677,529.945],["SO1-1",380950.937,1016460.165,512.932],["SO2-1",381042.445,1016372.728,511.162],["SO3-1",381303.247,1016217.697,509.64],["SO4-1",381231.037,1016090.574,511.364],["TM1-1",381104.388,1016715.499,514.955],["TM2-1",381158.03,1016661.088,513.585],["TM3-1",381189.859,1016741.766,514.477],["TM4-1",381324.62,1016608.084,506.886],["TM5-1",381498.634,1016530.65,502.944],["TO2-2",379117.449,1016198.983,523.145],["TP1-1",380082.243,1015879.175,513.479],["TP2-1",380193.605,1015693.025,512.247],["TP3-1",380415.422,1015413.409,510.895],["TP4-1",380549.693,1015191.339,512.722],["TP5-1",380636.746,1015111.153,513.755],["TP6-1",380658.866,1015046.578,512.922],["TP7-1",380760.07,1014983.251,511.388],["TP9-1",381154.932,1014727.912,507.116],["TP10-1",381321.604,1014563.696,501.812],["TP11-1",381381.475,1014465.972,500.439],["TP-1",380132.703,1015883.225,512.771],["VIS1-1",378918.334,1016177.253,516.082],["VIS2-1",379105.443,1016232.833,522.256]].map(b=>({n:b[0],x:b[1],y:b[2],z:b[3],src:'rapport'}));
+const $=id=>document.getElementById(id);
+const fmt=(v,d)=>v.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const KEY='bornesAjoutees';
+let USER=[];
+try{USER=JSON.parse(localStorage.getItem(KEY)||'[]')||[]}catch(e){USER=[]}
+let storageOk=true;
+function saveUser(){try{localStorage.setItem(KEY,JSON.stringify(USER));storageOk=true}catch(e){storageOk=false}}
+function all(){return BASE.concat(USER)}
+function findB(n){return all().find(b=>b.n===n)}
+const norm=s=>s.trim().toUpperCase().replace(/\s/g,'');
+function toUTM(lat,lon){
+  const a=6378137,f=1/298.257223563,k0=0.9996,e2=f*(2-f),ep2=e2/(1-e2);
+  const p=lat*Math.PI/180,l0=-9*Math.PI/180,l=lon*Math.PI/180;
+  const s=Math.sin(p),c=Math.cos(p),t=Math.tan(p);
+  const N=a/Math.sqrt(1-e2*s*s),T=t*t,C=ep2*c*c,A=c*(l-l0);
+  const e4=e2*e2,e6=e4*e2;
+  const M=a*((1-e2/4-3*e4/64-5*e6/256)*p-(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*p)+(15*e4/256+45*e6/1024)*Math.sin(4*p)-(35*e6/3072)*Math.sin(6*p));
+  const E=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120)+500000;
+  const Y=k0*(M+N*t*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720));
+  const conv=Math.atan(Math.tan(l-l0)*s)*180/Math.PI;
+  return {x:E,y:Y,conv};
+}
+let pos=null,acc=null,manual=false,heading=null,target=null,watchId=null,conv=0,editing=null,lastFix=null;
+try{target=localStorage.getItem('borneCible')}catch(e){}
+function dist(b){return pos?Math.hypot(b.x-pos.x,b.y-pos.y):null}
+function gisDeg(b){return (Math.atan2(b.x-pos.x,b.y-pos.y)*180/Math.PI+360)%360}
+function dirName(g){return ['Nord','Nord-Est','Est','Sud-Est','Sud','Sud-Ouest','Ouest','Nord-Ouest'][Math.round(g/45)%8]}
+function fmtDist(d){return d>=1000?[fmt(d/1000,2),'km']:[fmt(d,d<10?1:0),'m']}
+function setTarget(n){target=n;try{localStorage.setItem('borneCible',n)}catch(e){}render()}
+function nearest(){if(!pos)return null;let best=null,bd=1e12;for(const b of all()){const d=dist(b);if(d<bd){bd=d;best=b}}return best}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function render(){
+  if((!target||!findB(target))&&pos){const n=nearest();if(n)target=n.n}
+  const b=findB(target);
+  $('tName').textContent=b?b.n:'—';
+  if(b&&pos){
+    const d=dist(b),g=gisDeg(b),[dv,du]=fmtDist(d);
+    $('dist').textContent=dv;$('distU').textContent=du;
+    $('gis').textContent=fmt(g,0)+'° ('+fmt(g/0.9,0)+' gon)';
+    $('dirTxt').textContent=dirName(g);
+    const rot=heading==null?g+conv:g+conv-heading;
+    $('arrow').style.transform=`rotate(${rot}deg)`;$('arrow').style.transformOrigin='75px 75px';
+    $('rose').style.transform=heading==null?'':`rotate(${-heading}deg)`;$('rose').style.transformOrigin='75px 75px';
+    $('headTxt').textContent=heading==null?'Boussole inactive : la flèche indique la direction, Nord en haut':'Tiens le téléphone à plat : marche dans le sens de la flèche';
+    const lim=Math.max(5,acc||0),ar=$('arrive');
+    if(d<=lim){ar.className='arrive on';ar.innerHTML=`<b>Tu es dans la zone de ${esc(b.n)}</b> (moins de ${fmt(lim,0)} m, précision GPS ±${fmt(acc||0,0)} m). Cherche la borne au sol et ouvre sa fiche pour contrôler.`}
+    else ar.className='arrive';
+  }else{$('dist').textContent='—';$('distU').textContent='';$('gis').textContent='—';$('dirTxt').textContent='—';$('arrive').className='arrive'}
+  renderList();renderUserInfo();
+}
+function renderUserInfo(){$('userInfo').textContent=USER.length?`${USER.length} borne${USER.length>1?'s':''} ajoutée${USER.length>1?'s':''} sur ce téléphone`+(storageOk?'':' · mémoire indisponible, exporte-les !'):'Aucune pour l\'instant'}
+function renderList(){
+  const q=norm($('q').value);
+  let arr=all().filter(b=>!q||norm(b.n).includes(q));
+  arr=pos?arr.map(b=>[b,dist(b)]).sort((a,c)=>a[1]-c[1]):arr.map(b=>[b,null]);
+  $('listInfo').textContent=(pos?'Bornes triées par distance':'Bornes (position inconnue)')+' · '+arr.length;
+  $('list').innerHTML=arr.slice(0,150).map(([b,d])=>{const t=d==null?'':fmtDist(d).join(' ');const tag=b.src==='rapport'?'':` <span class="badge">${b.src==='gps'?'GPS ±'+fmt(b.acc||0,0)+' m':'ajoutée'}</span>`;return `<div class="item${b.n===target?' sel':''}" data-n="${esc(b.n)}"><div><div class="n">${esc(b.n)}${tag}</div><div class="note">${b.z!=null?'Z '+fmt(b.z,3):'Z non renseigné'}</div></div><div class="row"><span class="d">${t}</span><button class="mini" data-f="${esc(b.n)}">Fiche</button></div></div>`}).join('');
+}
+$('list').addEventListener('click',e=>{const f=e.target.closest('[data-f]');if(f){openFiche(f.dataset.f);return}const it=e.target.closest('.item');if(it){setTarget(it.dataset.n);window.scrollTo({top:0,behavior:'smooth'})}});
+$('q').addEventListener('input',renderList);
+$('btnNearest').onclick=()=>{const n=nearest();if(n)setTarget(n.n)};
+function srcText(b){
+  if(b.src==='rapport')return 'Système WGS 84 / UTM 29N · altitudes rattachées à RNG-2 · source : rapport topographique de la polygonale de base RTK (septembre 2026).';
+  let s=b.src==='gps'?`Position relevée au GPS du téléphone (précision ±${fmt(b.acc||0,0)} m) : à utiliser seulement pour retrouver la borne, pas pour mesurer.`:'Coordonnées saisies à la main.';
+  if(b.date)s+=` Ajoutée le ${new Date(b.date).toLocaleString('fr-FR')}.`;
+  if(b.r)s+=` Remarque : ${b.r}`;
+  return s;
+}
+function openFiche(n){const b=findB(n);if(!b)return;$('fName').textContent=b.n;$('fX').textContent=fmt(b.x,3)+' m';$('fY').textContent=fmt(b.y,3)+' m';$('fZ').textContent=b.z!=null?fmt(b.z,3)+' m':'—';$('fD').textContent=pos?fmtDist(dist(b)).join(' '):'position inconnue';$('fSrc').textContent=srcText(b);$('fUserBtns').style.display=b.src==='rapport'?'none':'flex';$('btnGo').onclick=()=>{setTarget(b.n);closeFiche()};$('btnEdit').onclick=()=>{closeFiche();openAdd(b)};$('btnDel').onclick=()=>{if(confirm(`Supprimer la borne ${b.n} de ce téléphone ?`)){USER=USER.filter(u=>u.n!==b.n);saveUser();if(target===b.n)target=null;closeFiche();render()}};$('sheet').classList.add('on')}
+function closeFiche(){$('sheet').classList.remove('on')}
+$('btnFiche').onclick=()=>{if(target)openFiche(target)};
+$('btnClose').onclick=closeFiche;$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeFiche()});
+let addSrc='saisie',addAcc=null;
+function openAdd(b){editing=b||null;$('aMode').textContent=b?'Modifier '+b.n:'Nouvelle borne';$('aN').value=b?b.n:'';$('aX').value=b?b.x.toFixed(3):'';$('aY').value=b?b.y.toFixed(3):'';$('aZ').value=b&&b.z!=null?b.z.toFixed(3):'';$('aR').value=b&&b.r?b.r:'';addSrc=b?b.src:'saisie';addAcc=b?b.acc:null;$('aSrcTxt').textContent=addSrc==='gps'?`Coordonnées GPS (±${fmt(addAcc||0,0)} m)`:'';$('aErr').textContent='';$('sheetAdd').classList.add('on')}
+function closeAdd(){$('sheetAdd').classList.remove('on')}
+$('btnAdd').onclick=()=>openAdd(null);$('btnAddClose').onclick=closeAdd;$('sheetAdd').addEventListener('click',e=>{if(e.target.id==='sheetAdd')closeAdd()});
+['aX','aY'].forEach(id=>$(id).addEventListener('input',()=>{addSrc='saisie';$('aSrcTxt').textContent='';$('aErr').textContent=''}));
+['aN','aZ'].forEach(id=>$(id).addEventListener('input',()=>{$('aErr').textContent=''}));
+$('btnUseGps').onclick=()=>{if(!lastFix){$('aErr').textContent='Pas encore de position GPS : attends que le voyant passe au vert.';return}$('aX').value=lastFix.x.toFixed(3);$('aY').value=lastFix.y.toFixed(3);addSrc='gps';addAcc=lastFix.acc;$('aSrcTxt').textContent=`Coordonnées GPS (±${fmt(addAcc,0)} m) : suffisant pour retrouver la borne, pas pour la mesurer.`;$('aErr').textContent=''};
+const num=v=>{v=String(v).trim().replace(/\s/g,'').replace(',','.');return v===''?null:Number(v)};
+$('btnSave').onclick=()=>{
+  const n=$('aN').value.trim(),x=num($('aX').value),y=num($('aY').value),z=num($('aZ').value);
+  if(!n){$('aErr').textContent='Donne un nom à la borne.';return}
+  const clash=all().find(b=>norm(b.n)===norm(n)&&(!editing||b.n!==editing.n));
+  if(clash){$('aErr').textContent=`Le nom ${clash.n} existe déjà${clash.src==='rapport'?' dans la polygonale de base':''}. Choisis un autre nom.`;return}
+  if(x==null||!isFinite(x)||x<100000||x>900000){$('aErr').textContent='X invalide : il doit être entre 100 000 et 900 000 (ex. 377139.412).';return}
+  if(y==null||!isFinite(y)||y<0||y>10000000){$('aErr').textContent='Y invalide (ex. 1012823.087).';return}
+  if(z!=null&&!isFinite(z)){$('aErr').textContent='Z invalide, ou laisse-le vide.';return}
+  const rec={n,x,y,z,src:addSrc,acc:addSrc==='gps'?addAcc:null,r:$('aR').value.trim(),date:editing&&editing.date?editing.date:Date.now()};
+  if(editing){USER=USER.map(u=>u.n===editing.n?rec:u);if(target===editing.n)target=n}else USER.push(rec);
+  saveUser();closeAdd();setTarget(n);
+};
+$('btnExport').onclick=()=>{
+  if(!USER.length){$('impMsg').textContent='Aucune borne ajoutée à exporter.';return}
+  const txt=USER.map(b=>[b.n,b.x.toFixed(3),b.y.toFixed(3),b.z!=null?b.z.toFixed(3):''].join(',')).join('\r\n')+'\r\n';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
+  const d=new Date();a.download=`BORNES_AJOUTEES_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.txt`;
+  document.body.appendChild(a);a.click();a.remove();$('impMsg').textContent=`${USER.length} borne(s) exportée(s) au format Nom,X,Y,Z.`;
+};
+$('btnImport').onclick=()=>$('fileImp').click();
+$('fileImp').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;const t=await f.text();let ok=0,skip=0;
+  for(const line of t.split(/\r?\n/)){
+    if(!line.trim())continue;
+    let p=line.includes(';')||line.includes('\t')?line.split(/[;\t]/):line.split(',');
+    p=p.map(s=>s.trim());if(p.length<3){skip++;continue}
+    const n=p[0],x=num(p[1]),y=num(p[2]),z=p.length>3?num(p[3]):null;
+    if(!n||!isFinite(x)||!isFinite(y)||x<100000||y<100000){skip++;continue}
+    if(BASE.find(b=>norm(b.n)===norm(n))){skip++;continue}
+    const rec={n,x,y,z:z!=null&&isFinite(z)?z:null,src:'saisie',acc:null,r:'Importée depuis '+f.name,date:Date.now()};
+    const i=USER.findIndex(u=>norm(u.n)===norm(n));if(i>=0)USER[i]=rec;else USER.push(rec);ok++;
+  }
+  saveUser();e.target.value='';$('impMsg').textContent=`${ok} borne(s) importée(s)`+(skip?`, ${skip} ligne(s) ignorée(s) (format invalide ou nom déjà dans la polygonale de base).`:'.');render();
+};
+function setGps(state,txt){$('gpsDot').className='dot'+(state==='ok'?' ok':state==='mid'?' mid':'');$('gpsTxt').textContent=txt}
+function startGps(){
+  manual=false;
+  if(!('geolocation' in navigator)){setGps('bad','GPS non disponible sur cet appareil : utilise la position manuelle');return}
+  if(watchId!=null)navigator.geolocation.clearWatch(watchId);
+  watchId=navigator.geolocation.watchPosition(p=>{
+    const u=toUTM(p.coords.latitude,p.coords.longitude);lastFix={x:u.x,y:u.y,acc:p.coords.accuracy};
+    if(manual)return;
+    pos=u;conv=u.conv;acc=p.coords.accuracy;
+    setGps(acc<=8?'ok':'mid',`GPS actif · précision ±${fmt(acc,0)} m`);
+    $('posTxt').textContent=`Ma position : X ${fmt(u.x,1)} · Y ${fmt(u.y,1)}`;
+    render();
+  },err=>{
+    const m={1:'Autorisation de localisation refusée : active-la dans les réglages du navigateur',2:'Position introuvable : va à découvert, GPS activé',3:'GPS trop lent : patiente à découvert'}[err.code]||err.message;
+    setGps('bad',m);
+  },{enableHighAccuracy:true,maximumAge:1000,timeout:30000});
+}
+$('btnManual').onclick=()=>{const x=num($('mx').value),y=num($('my').value);if(x==null||y==null||!isFinite(x)||!isFinite(y)||x<100000||y<100000){$('mx').style.borderColor='var(--bad)';$('my').style.borderColor='var(--bad)';return}$('mx').style.borderColor='';$('my').style.borderColor='';manual=true;pos={x,y};acc=0;conv=0;setGps('mid','Position manuelle (GPS ignoré)');$('posTxt').textContent=`Position saisie : X ${fmt(x,1)} · Y ${fmt(y,1)}`;render()};
+$('btnGps').onclick=()=>{startGps()};
+function onOrient(e){let h=null;if(typeof e.webkitCompassHeading==='number')h=e.webkitCompassHeading;else if(e.absolute&&e.alpha!=null)h=(360-e.alpha)%360;if(h!=null){heading=h;render()}}
+$('btnCompass').onclick=async()=>{
+  try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const r=await DeviceOrientationEvent.requestPermission();if(r!=='granted')return}}catch(e){}
+  window.addEventListener('deviceorientationabsolute',onOrient,true);window.addEventListener('deviceorientation',onOrient,true);
+  $('btnCompass').textContent='Boussole active';
+};
+render();startGps();
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
